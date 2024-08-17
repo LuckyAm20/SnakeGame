@@ -117,9 +117,12 @@ class Game:
         quit()
 
     def draw_score(self):
-        score_text = self.font.render(f'Score: {self.score}', True, self.colors.text_color)
-        text_rect = score_text.get_rect(center=(self.size[0] // 3 * 2, self.field_position[1] - 80))
-        self.screen.blit(score_text, text_rect)
+        score_label = self.font.render("Score:", True, self.colors.text_color)
+        self.screen.blit(score_label, (self.size[0] - 250, self.field_position[1] - 80))
+
+        score_value = self.font.render(str(self.score), True, self.colors.text_color)
+        score_value_position = (self.size[0] - 250 + score_label.get_width() + 10, self.field_position[1] - 80)
+        self.screen.blit(score_value, score_value_position)
 
     def run(self):
         clock = pygame.time.Clock()
