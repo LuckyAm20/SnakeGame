@@ -1,3 +1,5 @@
+import random
+
 import pygame
 
 from src.components.field import GameField, CellState
@@ -9,13 +11,14 @@ class Game:
     def __init__(self, settings: GameSettings, colors: Colors):
         self.settings = settings
         self.colors = colors
+        self.score = 0
         self.size = self.settings.window_size
         self.screen = pygame.display.set_mode(self.size)
         pygame.display.set_caption(self.settings.name)
 
         self.field_size = self.settings.field_size
         self.field_position = [(self.size[0] - self.field_size[0]) // 2,
-                               (self.size[1] - self.field_size[1]) // 2]
+                               (self.size[1] - self.field_size[1]) // 2 + 50]
 
         border_sprite_up = pygame.image.load('assets/borders/border_up.png')
         self.border_sprite_up = pygame.transform.scale(border_sprite_up, (self.settings.border_width, self.settings.border_width))
@@ -35,19 +38,28 @@ class Game:
         self.snake_body = pygame.transform.scale(snake_body, (self.settings.cell_size, self.settings.cell_size))
 
         apple = pygame.image.load('assets/food/apple.png')
-        self.apple = pygame.transform.scale(apple, (self.settings.cell_size, self.settings.cell_size))
+        apple = pygame.transform.scale(apple, (self.settings.cell_size, self.settings.cell_size))
+        cherry = pygame.image.load('assets/food/cherry.png')
+        cherry = pygame.transform.scale(cherry, (self.settings.cell_size, self.settings.cell_size))
+        grape = pygame.image.load('assets/food/grape.png')
+        grape = pygame.transform.scale(grape, (self.settings.cell_size, self.settings.cell_size))
+        pear = pygame.image.load('assets/food/pear.png')
+        pear = pygame.transform.scale(pear, (self.settings.cell_size, self.settings.cell_size))
+        strawberry = pygame.image.load('assets/food/strawberry.png')
+        strawberry = pygame.transform.scale(strawberry, (self.settings.cell_size, self.settings.cell_size))
+        self.fruits = [(apple, 10), (cherry, 50), (grape, 100), (pear, 150), (strawberry, 200)]
+
+        self.apple_exists = False
+        self.apple_timer = 0
+        self.apple_interval = random.randint(3000, 8000)
 
         self.game_field = GameField(self.field_size[0], self.field_size[1], self.settings)
         self.game_field.update_cell(5, 5, CellState.SNAKE_HEAD)
         self.game_field.update_cell(5, 6, CellState.SNAKE_BODY)
         self.snake = Snake(self.game_field, (5, 6), self.settings)
 
-        apple_position = (1, 1)
-        self.game_field.update_cell(apple_position[0], apple_position[1], CellState.APPLE)
-
-    def place_apple(self):
-        apple_position = (5, 5)
-        self.game_field.update_cell(apple_position[0], apple_position[1], CellState.APPLE)
+        pygame.font.init()
+        self.font = pygame.font.SysFont(None, 50)
 
     def draw_borders(self):
         self.screen.blit(self.border_sprite_corner, (self.field_position[0] - self.settings.border_width, self.field_position[1] - self.settings.border_width))
@@ -80,24 +92,45 @@ class Game:
                 position = (self.field_position[0] + x * self.settings.cell_size,
                             self.field_position[1] + y * self.settings.cell_size)
 
-                if cell == CellState.SNAKE_HEAD:
+                if cell.state == CellState.SNAKE_HEAD:
                     self.screen.blit(self.snake_head_up, position)
-                elif cell == CellState.SNAKE_BODY:
+                elif cell.state == CellState.SNAKE_BODY:
                     self.screen.blit(self.snake_body, position)
-                elif cell == CellState.APPLE:
-                    self.screen.blit(self.apple, position)
+                elif cell.state == CellState.FRUIT:
+                    self.screen.blit(cell.sprite, position)
                 else:
                     pygame.draw.rect(self.screen, self.colors.field_color,
                                      (position[0], position[1], self.settings.cell_size, self.settings.cell_size))
 
+    def place_random_apple(self):
+        if not self.apple_exists:
+            position = self.game_field.get_random_empty_cell()
+            if position:
+                sprite, score = random.choice(self.fruits)
+                self.game_field.update_cell(position[0], position[1], CellState.FRUIT, sprite, score)
+                self.apple_exists = True
+
     def game_over(self):
-        print("Game Over")
+        print('Game Over')
+        print(f'Score: {self.score}')
         pygame.quit()
         quit()
+
+    def draw_score(self):
+        score_text = self.font.render(f'Score: {self.score}', True, self.colors.text_color)
+        text_rect = score_text.get_rect(center=(self.size[0] // 3 * 2, self.field_position[1] - 80))
+        self.screen.blit(score_text, text_rect)
 
     def run(self):
         clock = pygame.time.Clock()
         while True:
+            current_time = pygame.time.get_ticks()
+
+            if not self.apple_exists and current_time - self.apple_timer > self.apple_interval:
+                self.place_random_apple()
+                self.apple_timer = current_time
+                self.apple_interval = random.randint(2000, 5000)
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -112,13 +145,22 @@ class Game:
                     elif event.key == pygame.K_RIGHT:
                         self.snake.change_direction(Direction.RIGHT)
 
-            if self.snake.move():
+            game_over, apple_exists, score = self.snake.move()
+            if game_over:
                 self.game_over()
+            if not apple_exists:
+                self.apple_exists = False
+                self.settings.fps += 1
+                self.score += score
 
             self.screen.fill(self.colors.frame_color)
 
             self.draw_borders()
+            pygame.draw.rect(self.screen, self.colors.field_color,
+                             (self.field_position[0], self.field_position[1],
+                              self.field_size[0], self.field_size[1]))
             self.draw_field()
+            self.draw_score()
             self.snake.draw(self.screen, self.field_position)
             pygame.display.flip()
             clock.tick(self.settings.fps)

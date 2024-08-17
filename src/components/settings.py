@@ -42,10 +42,15 @@ class Colors:
     _frame_color = (0, 255, 204)
     _field_color = (0, 0, 0)
     _border_color = (255, 255, 255)
+    _text_color = (255, 0, 0)
 
     @property
     def frame_color(self):
         return self._frame_color
+
+    @property
+    def text_color(self):
+        return self._text_color
 
     @property
     def field_color(self):

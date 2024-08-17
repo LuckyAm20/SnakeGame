@@ -1,7 +1,6 @@
 from enum import Enum
 
 import pygame
-
 from src.components.field import GameField, CellState
 from src.components.settings import GameSettings
 
@@ -40,33 +39,35 @@ class Snake:
         self.body_sprite = pygame.transform.scale(self.body_sprite, (self.settings.cell_size, self.settings.cell_size))
 
     def move(self):
+        apple_exists, score = True, 0
         head_x, head_y = self.body[0]
         move_x, move_y = self.direction.value
         new_head = (head_x + move_x, head_y + move_y)
 
-        if (new_head[0] < 0 or new_head[0] >= self.field.width // self.settings.cell_size or
-            new_head[1] < 0 or new_head[1] >= self.field.height // self.settings.cell_size):
-            return 1
+        if ((new_head[0] < 0 or new_head[0] >= self.field.width // self.settings.cell_size or
+            new_head[1] < 0 or new_head[1] >= self.field.height // self.settings.cell_size) or
+                self.field.cells[new_head[1]][new_head[0]].state == CellState.SNAKE_BODY):
+            return 1, apple_exists, score
 
-        if self.field.cells[new_head[1]][new_head[0]] == CellState.SNAKE_BODY:
-            return 1
-
-        cell_state = self.field.cells[new_head[1]][new_head[0]]
+        cell_state = self.field.cells[new_head[1]][new_head[0]].state
+        cell = self.field.cells[new_head[1]][new_head[0]]
         self.grow(cell_state)
 
         if not self.grow_flag:
             tail_x, tail_y = self.body.pop()
             self.field.update_cell(tail_x, tail_y, CellState.EMPTY)
         else:
+            apple_exists = False
             self.grow_flag = False
+            score = cell.score
 
         self.body.insert(0, new_head)
         self.field.update_cell(new_head[0], new_head[1], CellState.SNAKE_HEAD)
         self.field.update_cell(self.body[1][0], self.body[1][1], CellState.SNAKE_BODY)
-        return 0
+        return 0, apple_exists, score
 
     def grow(self, cell_state: CellState):
-        if cell_state == CellState.APPLE:
+        if cell_state == CellState.FRUIT:
             self.grow_flag = True
 
     def change_direction(self, direction: Direction):
