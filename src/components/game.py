@@ -59,6 +59,9 @@ class Game:
         self.apple_timer = 0
         self.apple_interval = random.randint(3000, 8000)
 
+        self.wall_timer = 0
+        self.wall_interval = random.randint(8000, 12000)
+
         self.game_field = GameField(self.field_size[0], self.field_size[1], self.settings)
         self.game_field.update_cell(5, 5, CellState.SNAKE_HEAD)
         self.game_field.update_cell(5, 6, CellState.SNAKE_BODY)
@@ -104,6 +107,8 @@ class Game:
                     self.screen.blit(self.snake_body, position)
                 elif cell.state == CellState.FRUIT:
                     self.screen.blit(cell.sprite, position)
+                elif cell.state == CellState.WALL:
+                    self.screen.blit(self.border_sprite_corner, position)
                 else:
                     pygame.draw.rect(self.screen, self.colors.field_color,
                                      (position[0], position[1], self.settings.cell_size, self.settings.cell_size))
@@ -115,6 +120,11 @@ class Game:
                 sprite, score = random.choice(self.fruits)
                 self.game_field.update_cell(position[0], position[1], CellState.FRUIT, sprite, score)
                 self.apple_exists = True
+
+    def place_random_wall(self):
+        position = self.game_field.get_random_empty_cell()
+        if position:
+            self.game_field.update_cell(position[0], position[1], CellState.WALL)
 
     @staticmethod
     def save_highscore(score):
@@ -141,6 +151,11 @@ class Game:
                 self.place_random_apple()
                 self.apple_timer = current_time
                 self.apple_interval = random.randint(2000, 5000)
+
+            if current_time - self.wall_timer > self.wall_interval:
+                self.place_random_wall()
+                self.wall_timer = current_time
+                self.wall_interval = random.randint(8000, 12000)
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:

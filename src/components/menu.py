@@ -1,5 +1,3 @@
-import json
-
 import pygame
 
 from src.utils.utils import load_highscore

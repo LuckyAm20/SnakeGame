@@ -11,6 +11,7 @@ class CellState(Enum):
     SNAKE_HEAD = 1
     SNAKE_BODY = 2
     FRUIT = 3
+    WALL = 4
 
 
 class Cell:

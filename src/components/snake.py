@@ -44,9 +44,10 @@ class Snake:
         move_x, move_y = self.direction.value
         new_head = (head_x + move_x, head_y + move_y)
 
-        if ((new_head[0] < 0 or new_head[0] >= self.field.width // self.settings.cell_size or
+        if (((new_head[0] < 0 or new_head[0] >= self.field.width // self.settings.cell_size or
             new_head[1] < 0 or new_head[1] >= self.field.height // self.settings.cell_size) or
-                self.field.cells[new_head[1]][new_head[0]].state == CellState.SNAKE_BODY):
+                self.field.cells[new_head[1]][new_head[0]].state == CellState.SNAKE_BODY) or
+                self.field.cells[new_head[1]][new_head[0]].state == CellState.WALL):
             return 1, apple_exists, score
 
         cell_state = self.field.cells[new_head[1]][new_head[0]].state
