@@ -55,17 +55,6 @@ class Game:
         strawberry = pygame.transform.scale(strawberry, (self.settings.cell_size, self.settings.cell_size))
         self.fruits = [(apple, 10), (cherry, 50), (grape, 100), (pear, 150), (strawberry, 200)]
 
-        self.apple_exists = False
-        self.apple_timer = 0
-        self.apple_interval = random.randint(3000, 8000)
-
-        self.wall_timer = 0
-        self.wall_interval = random.randint(8000, 12000)
-
-        self.game_field = GameField(self.field_size[0], self.field_size[1], self.settings)
-        self.game_field.update_cell(5, 5, CellState.SNAKE_HEAD)
-        self.game_field.update_cell(5, 6, CellState.SNAKE_BODY)
-        self.snake = Snake(self.game_field, (5, 6), self.settings)
 
         pygame.font.init()
         self.font = pygame.font.SysFont(None, 50)
@@ -142,6 +131,20 @@ class Game:
         score_value_position = (self.size[0] - 250 + score_label.get_width() + 10, self.field_position[1] - 80)
         self.screen.blit(score_value, score_value_position)
 
+    def start_game(self):
+        self.apple_exists = False
+        self.apple_timer = 0
+        self.apple_interval = random.randint(3000, 8000)
+
+        self.wall_timer = 0
+        self.wall_interval = random.randint(8000, 12000)
+
+        self.game_field = GameField(self.field_size[0], self.field_size[1], self.settings)
+        self.game_field.update_cell(5, 5, CellState.SNAKE_HEAD)
+        self.game_field.update_cell(5, 6, CellState.SNAKE_BODY)
+        self.snake = Snake(self.game_field, (5, 6), self.settings)
+        self.play_game()
+
     def play_game(self):
         clock = pygame.time.Clock()
         while True:
@@ -208,7 +211,7 @@ class Game:
             if not self.game_running:
                 self.show_menu()
             else:
-                self.play_game()
+                self.start_game()
 
     def show_menu(self):
         clock = pygame.time.Clock()
