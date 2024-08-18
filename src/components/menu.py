@@ -19,9 +19,9 @@ class Menu:
         highscore_text = self.small_font.render(f'Highscore: {self.highscore}', True, (255, 255, 255))
 
         self.screen.blit(title_text, (140, 100))
-        pygame.draw.rect(self.screen, (255, 0, 0), self.button_rect)
+        pygame.draw.rect(self.screen, (0, 255, 0), self.button_rect)
         self.screen.blit(play_text, (self.button_rect.x + 10, self.button_rect.y + 10))
-        self.screen.blit(highscore_text, (220, 500))
+        self.screen.blit(highscore_text, (210, 500))
 
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:

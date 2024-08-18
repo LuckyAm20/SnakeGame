@@ -3,6 +3,7 @@ import random
 
 import pygame
 
+from src.components.end import End
 from src.components.field import GameField, CellState
 from src.components.menu import Menu
 from src.components.settings import GameSettings, Colors
@@ -15,12 +16,14 @@ class Game:
         self.settings = settings
         self.colors = colors
         self.score = 0
+        self.game_over = False
         self.size = self.settings.window_size
         self.screen = pygame.display.set_mode(self.size)
         pygame.display.set_caption(self.settings.name)
         self.menu = Menu(self.screen, colors)
-        self.game_running = False
         self.highscore = load_highscore()
+        self.small_font = pygame.font.Font(None, 36)
+        self.game_running = False
 
         self.field_size = self.settings.field_size
         self.field_position = [(self.size[0] - self.field_size[0]) // 2,
@@ -165,18 +168,19 @@ class Game:
                     pygame.quit()
                     return
                 elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_UP:
+                    if event.key == pygame.K_UP or event.key == pygame.K_w:
                         self.snake.change_direction(Direction.UP)
-                    elif event.key == pygame.K_DOWN:
+                    elif event.key == pygame.K_DOWN or event.key == pygame.K_s:
                         self.snake.change_direction(Direction.DOWN)
-                    elif event.key == pygame.K_LEFT:
+                    elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
                         self.snake.change_direction(Direction.LEFT)
-                    elif event.key == pygame.K_RIGHT:
+                    elif event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                         self.snake.change_direction(Direction.RIGHT)
 
             game_over, apple_exists, score = self.snake.move()
             if game_over:
                 self.end_game()
+                return
             if not apple_exists:
                 self.apple_exists = False
                 self.settings.fps += 1
@@ -201,13 +205,19 @@ class Game:
             self.highscore = self.score
             self.save_highscore(self.highscore)
 
-        print('Game Over')
-        print(f'Score: {self.score}')
-        pygame.quit()
-        quit()
+        end = End(self.screen, self.score, self.font, self.small_font, self.colors)
+        end.draw()
+        self.game_running = False
+        self.score = 0
+        self.settings.fps = 5
+        if end.wait_for_quit():
+            self.game_over = True
 
     def run(self):
         while True:
+            if self.game_over:
+                pygame.quit()
+                return
             if not self.game_running:
                 self.show_menu()
             else:
@@ -218,7 +228,7 @@ class Game:
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    pygame.quit()
+                    self.game_over = True
                     return
 
                 result = self.menu.handle_event(event)
