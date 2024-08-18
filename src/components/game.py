@@ -1,10 +1,13 @@
+import json
 import random
 
 import pygame
 
 from src.components.field import GameField, CellState
+from src.components.menu import Menu
 from src.components.settings import GameSettings, Colors
 from src.components.snake import Snake, Direction
+from src.utils.utils import load_highscore
 
 
 class Game:
@@ -15,6 +18,9 @@ class Game:
         self.size = self.settings.window_size
         self.screen = pygame.display.set_mode(self.size)
         pygame.display.set_caption(self.settings.name)
+        self.menu = Menu(self.screen, colors)
+        self.game_running = False
+        self.highscore = load_highscore()
 
         self.field_size = self.settings.field_size
         self.field_position = [(self.size[0] - self.field_size[0]) // 2,
@@ -110,11 +116,13 @@ class Game:
                 self.game_field.update_cell(position[0], position[1], CellState.FRUIT, sprite, score)
                 self.apple_exists = True
 
-    def game_over(self):
-        print('Game Over')
-        print(f'Score: {self.score}')
-        pygame.quit()
-        quit()
+    @staticmethod
+    def save_highscore(score):
+        try:
+            with open('highscore.json', 'w') as file:
+                json.dump({'highscore': score}, file)
+        except IOError:
+            print("Error saving highscore.")
 
     def draw_score(self):
         score_label = self.font.render("Score:", True, self.colors.text_color)
@@ -124,7 +132,7 @@ class Game:
         score_value_position = (self.size[0] - 250 + score_label.get_width() + 10, self.field_position[1] - 80)
         self.screen.blit(score_value, score_value_position)
 
-    def run(self):
+    def play_game(self):
         clock = pygame.time.Clock()
         while True:
             current_time = pygame.time.get_ticks()
@@ -150,7 +158,7 @@ class Game:
 
             game_over, apple_exists, score = self.snake.move()
             if game_over:
-                self.game_over()
+                self.end_game()
             if not apple_exists:
                 self.apple_exists = False
                 self.settings.fps += 1
@@ -167,3 +175,39 @@ class Game:
             self.snake.draw(self.screen, self.field_position)
             pygame.display.flip()
             clock.tick(self.settings.fps)
+
+    def end_game(self):
+        self.game_running = False
+
+        if self.score > self.highscore:
+            self.highscore = self.score
+            self.save_highscore(self.highscore)
+
+        print('Game Over')
+        print(f'Score: {self.score}')
+        pygame.quit()
+        quit()
+
+    def run(self):
+        while True:
+            if not self.game_running:
+                self.show_menu()
+            else:
+                self.play_game()
+
+    def show_menu(self):
+        clock = pygame.time.Clock()
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    return
+
+                result = self.menu.handle_event(event)
+                if result == 'play':
+                    self.game_running = True
+                    return
+
+            self.menu.draw()
+            pygame.display.flip()
+            clock.tick(30)
